@@ -1,0 +1,12 @@
+[package]
+name = "numbers"
+version = "0.0.1"
+edition = "2024"
+
+[lib]
+path = "numbers.rs"
+
+[dependencies]
+rug = "1.30.0"
+serde = "1.0.229"
+serde_with = "3.24.0"
