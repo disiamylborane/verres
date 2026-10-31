@@ -9,4 +9,6 @@ path = "src/lib.rs"
 [dependencies]
 rug = "1.30.0"
 compact_str = "0.10.0"
+ribbit = "0.2.1"
 nimi-pona = {path = "../nimi-pona"}
+numbers = {path = "../numbers"}
