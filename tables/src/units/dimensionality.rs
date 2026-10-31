@@ -1,5 +1,7 @@
 
 use numbers::Rational;
+use crate::units::unitid::AbsoluteUnitId;
+
 use super::UnitId;
 
 const MAX_BASE_UNITS: usize = super::unitid::MAX_BASE_UNITS as usize;
@@ -42,15 +44,7 @@ impl SevenRatiosBits {
     pub fn unpack(self) -> [Rational; MAX_BASE_UNITS] {
         let [signs, bytes@..] = self.0.to_le_bytes();
 
-        [
-            Self::ratio_of_byte(bytes[0], signs & (1 << 1) != 0),
-            Self::ratio_of_byte(bytes[1], signs & (1 << 2) != 0),
-            Self::ratio_of_byte(bytes[2], signs & (1 << 3) != 0),
-            Self::ratio_of_byte(bytes[3], signs & (1 << 4) != 0),
-            Self::ratio_of_byte(bytes[4], signs & (1 << 5) != 0),
-            Self::ratio_of_byte(bytes[5], signs & (1 << 6) != 0),
-            Self::ratio_of_byte(bytes[6], signs & (1 << 7) != 0),
-        ]
+        std::array::from_fn(|i| Self::ratio_of_byte(bytes[i], signs & (1 << (i+1)) != 0))
     }
 
     const fn ratio_of_byte(byte: u8, sign: bool) -> Rational {
@@ -133,12 +127,11 @@ impl Dimensionality {
         }
     }
 
-    /// Returns an iterator over UnitId and power expressed in base units
-    pub fn iter_base_units<'a>(&'a self, include_zeros: bool) -> impl Iterator<Item=(UnitId, Rational)> + 'a {
+    pub(super) fn iter_base_units<'a>(&'a self, include_zeros: bool) -> impl Iterator<Item=(AbsoluteUnitId, Rational)> + 'a {
         struct Gen<'a>{dim: &'a Dimensionality, curr_idx: u8, return_zeros: bool}
 
         impl Iterator for Gen<'_> {
-            type Item = (UnitId, Rational);
+            type Item = (AbsoluteUnitId, Rational);
 
             fn next(&mut self) -> Option<Self::Item> {
                 loop {
@@ -150,7 +143,7 @@ impl Dimensionality {
                     if self.return_zeros || power != Rational::new_small(0, 1) {
                         let ret = UnitId::base(self.curr_idx);
                         self.curr_idx += 1;
-                        break Some((ret, power));
+                        break Some((AbsoluteUnitId::new_proven(ret), power));
                     }
 
                     self.curr_idx += 1;
@@ -234,7 +227,7 @@ fn test_dimensionality() {
 
     for i in 0..MAX_BASE_UNITS as u8 {
         let dim = Dimensionality::unit(i);
-        assert_eq!(dim.iter_base_units(false).next().unwrap().0, UnitId::base(i));
+        assert_eq!(dim.iter_base_units(false).next().unwrap().0.unitid(), UnitId::base(i));
     }
 
     let d0 = Dimensionality::unit(0);

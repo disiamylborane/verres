@@ -12,15 +12,13 @@
 //! 
 //! The derived units may be one of the following kinds:
 //! - [`UnitKind::Absolute`] - the regular absolute unit of measurement which allows
-//!   multiplication and division. All the base units are absolute.
+//!   multiplication and division. All the base units are absolute. This may include dimensionless
+//!   units like percents, ppms and moles.
 //! - [`UnitKind::Relative`] - the offset unit, like Celsius degrees or European shoe sizes.
 //!   They are denoted by the degree symbol either before or after the unit: °C or C°. The
 //!   degree-prefixed unit is a Point (100 °C = 373.15 K), the degree-suffixed one is a
 //!   distance between points (100 C° = 100 K). Points may only exist alone, distances may
 //!   be parts of unit power expressions (C° / s).
-//! - [`UnitKind::LinearRatio`] - percents, ppms, halves and other fractions of another value.
-//!   Actually dimensionless. Typically used with special math operators ⨣ and -&#x0302;-,
-//!   where a ⨣ b = a * (1 + b), a -&#x0302;- b = a * (1 - b)
 //! - [`UnitKind::LogDimensionless`] - decibels, octaves and other units of logarithmic ratios.
 //!   Either exists alone and in that case it is dimensioness, or as a combination of log ratio
 //!   value per unit power expression denoted with // operator (dB // s, dB // m2 s-1), which
@@ -47,5 +45,8 @@ pub use definition::{UnitDefinition, BaseUnitDefinition, UnitKind};
 mod unit_system;
 pub use unit_system::{UnitSystem};
 
-mod atom;
-pub use atom::{SymbolicUnitElement, AtomicUnit, AtomicComposeableUnit};
+mod unit;
+pub use unit::{Unit, Value};
+
+#[cfg(test)]
+mod tests;

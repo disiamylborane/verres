@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-
 use numbers::Rational;
 
-use crate::{strings::{Language, Name, Symbol}, units::Quantity};
+use crate::{strings::{Language, Name}, units::{Quantity, definition::{AbsoluteUnitDefinition, LogPointUnitDefinition, LogRatioUnitDefinition, RelativeUnitDefinition}, unitid::{AbsoluteUnitId, ExpressionUnitId, LogPointUnitId, LogRatioUnitId, RelativeUnitId}}};
 
 use super::{UnitDefinition, UnitId, UnitKind, Dimensionality, unitid::MAX_BASE_UNITS, BaseUnitDefinition};
 
@@ -12,6 +11,14 @@ use super::{UnitDefinition, UnitId, UnitKind, Dimensionality, unitid::MAX_BASE_U
 pub struct UnitSystem {
     base: Vec<UnitDefinition>,
     derived: HashMap<UnitId, UnitDefinition>,
+}
+
+
+pub(crate) enum UnitType {
+    Absolute(AbsoluteUnitId),
+    Relative(RelativeUnitId),
+    LogRatio(LogRatioUnitId),
+    LogPoint(LogPointUnitId),
 }
 
 
@@ -31,14 +38,14 @@ pub enum UnitDefinitionError {
 
 impl UnitSystem {
     /// Add a new base unit to the engine
-    pub fn add_base(base_units: Vec<BaseUnitDefinition>) -> Result<Self, UnitDefinitionError> {
+    pub fn new(base_units: Vec<BaseUnitDefinition>) -> Result<Self, UnitDefinitionError> {
         if base_units.len() > MAX_BASE_UNITS as usize {
             Err(UnitDefinitionError::NoSpace)
         }
         else {
             for i in 0..base_units.len() {
                 for j in (i+1)..base_units.len() {
-                    if base_units[i].symbol == base_units[j].symbol {
+                    if base_units[i].names.symbol == base_units[j].names.symbol {
                         return Err(UnitDefinitionError::SymbolDuplication)
                     }
                 }
@@ -49,17 +56,15 @@ impl UnitSystem {
                 let mut dim = [Rational::ZERO; MAX_BASE_UNITS as usize];
                 dim[i] = Rational::ONE;
                 let dimensionality = Dimensionality::new(dim);
-                let kind = UnitKind::Absolute {
+                let kind = UnitKind::Absolute(AbsoluteUnitDefinition {
                     scale: Quantity {
                         value: Rational::ONE.into_number(),
                         dimensionality
                     },
-                    allow_prefixes: baseunit.allows_prefixes,
-                };
+                    allows_prefixes: baseunit.allows_prefixes,
+                });
                 base.push(UnitDefinition {
-                    symbol: Symbol::new(&baseunit.symbol).ok_or(UnitDefinitionError::IncorrectSymbol)?,
-                    name: baseunit.name,
-                    description: baseunit.description,
+                    names: baseunit.names,
                     kind
                 });
             }
@@ -102,29 +107,28 @@ impl UnitSystem {
     /// Add a name to a unit on another language
     pub fn add_name(&mut self, unit: UnitId, name: &str, lang: Language) -> Result<(), UnitDefinitionError> {
         let unit_def = &mut self.index_mut(unit);
-        unit_def.name.insert(lang, Name::new(name).ok_or(UnitDefinitionError::IncorrectName)?);
+        unit_def.names.name.insert(lang, Name::new(name).ok_or(UnitDefinitionError::IncorrectName)?);
         Ok(())
     }
 
     /// Add the description to a unit on another language
     pub fn add_description(&mut self, unit: UnitId, description: String, lang: Language) {
         let unit_def = &mut self.index_mut(unit);
-        unit_def.description.insert(lang, description.into());
+        unit_def.names.description.insert(lang, description.into());
     }
 
-    /// Get unit by [`UnitId`]
-    pub fn get(&self, id: UnitId) -> Option<&UnitDefinition> {
-        if id.0 < MAX_BASE_UNITS as u16 {
-            self.base.get(id.0 as usize)
-        }
-        else {
-            self.derived.get(&id)
+    pub(super) fn get_type(&self, id: UnitId) -> UnitType {
+        match self[id].kind {
+            UnitKind::Absolute(_) => UnitType::Absolute(AbsoluteUnitId::new_proven(id)),
+            UnitKind::Relative(_) => UnitType::Relative(RelativeUnitId::new_proven(id)),
+            UnitKind::LogDimensionless(_) => UnitType::LogRatio(LogRatioUnitId::new_proven(id)),
+            UnitKind::LogPoint(_) => UnitType::LogPoint(LogPointUnitId::new_proven(id)),
         }
     }
 
     /// Get unit by the symbol (only root, no prefixes)
     pub fn get_by_symbol(&self, symbol: &str, degreed: bool) -> Option<(UnitId, &UnitDefinition)> {
-        self.iter().find(|(_, def)| def.is_degreed() == degreed && &*def.symbol == symbol)
+        self.iter().find(|(_, def)| def.is_degreed() == degreed && &*def.names.symbol == symbol)
     }
 
     /// Enumerate all units, base and derived
@@ -147,3 +151,51 @@ impl std::ops::Index<UnitId> for UnitSystem {
     }
 }
 
+impl std::ops::Index<AbsoluteUnitId> for UnitSystem {
+    type Output = AbsoluteUnitDefinition;
+
+    fn index(&self, id: AbsoluteUnitId) -> &Self::Output {
+        let UnitKind::Absolute(ret) = &self[id.unitid()].kind else {panic!("AbsoluteUnitId corresponds to non-absolute unit")};
+        ret
+    }
+}
+
+impl std::ops::Index<RelativeUnitId> for UnitSystem {
+    type Output = RelativeUnitDefinition;
+
+    fn index(&self, id: RelativeUnitId) -> &Self::Output {
+        let UnitKind::Relative(ret) = &self[id.unitid()].kind else {panic!("RelativeUnitId corresponds to non-relative unit")};
+        ret
+    }
+}
+
+impl std::ops::Index<LogRatioUnitId> for UnitSystem {
+    type Output = LogRatioUnitDefinition;
+
+    fn index(&self, id: LogRatioUnitId) -> &Self::Output {
+        let UnitKind::LogDimensionless(ret) = &self[id.unitid()].kind else {panic!("LogRatioUnitId corresponds to non-logratio unit")};
+        ret
+    }
+}
+
+impl std::ops::Index<LogPointUnitId> for UnitSystem {
+    type Output = LogPointUnitDefinition;
+
+    fn index(&self, id: LogPointUnitId) -> &Self::Output {
+        let UnitKind::LogPoint(ret) = &self[id.unitid()].kind else {panic!("LogPointUnitId corresponds to non-logpoint unit")};
+        ret
+    }
+}
+
+
+impl std::ops::Index<ExpressionUnitId> for UnitSystem {
+    type Output = Quantity;
+
+    fn index(&self, id: ExpressionUnitId) -> &Self::Output {
+        match &self[id.unitid()].kind {
+            UnitKind::Absolute(AbsoluteUnitDefinition { scale, allows_prefixes:_ }) => scale,
+            UnitKind::Relative(RelativeUnitDefinition { scale, offset:_ }) => scale,
+            _ => panic!("ExpressionUnitId corresponds to non-expression unit")
+        }
+    }
+}

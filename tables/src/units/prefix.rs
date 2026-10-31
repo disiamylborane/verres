@@ -200,3 +200,38 @@ impl core::fmt::Debug for Prefix {
         write!(f, "Prefix(\"{}\")", self.meaning())
     }
 }
+
+
+#[test]
+fn test_prefixes() {
+    for prefix in [
+        "",
+        "da", "h", "d", "c",
+        "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q",
+        "m", "μ", "n", "p", "f", "a", "z", "y", "r", "q",
+        "ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi", "Ri", "Qi",
+    ] {
+        assert_eq!(Prefix::parse(prefix).unwrap().name(), prefix);
+    }
+
+    let row_big = ["k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"];
+    let row_small = ["m", "μ", "n", "p", "f", "a", "z", "y", "r", "q"];
+    let row_bin = ["ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi", "Ri", "Qi"];
+
+    let mut big = Rational::new(1000, 1);
+    let mut small = Rational::new(1, 1000);
+    let mut bin = Rational::new(1024, 1);
+    for v in 0..row_big.len() {
+        let pbig = Prefix::parse(row_big[v]).unwrap().meaning();
+        let psmall = Prefix::parse(row_small[v]).unwrap().meaning();
+        let pbin = Prefix::parse(row_bin[v]).unwrap().meaning();
+
+        assert_eq!(pbig, big.clone());
+        assert_eq!(psmall, small.clone());
+        assert_eq!(pbin, bin.clone());
+
+        big = big * Rational::new(1000, 1);
+        small = small * Rational::new(1, 1000);
+        bin = bin * Rational::new(1024, 1);
+    }
+}

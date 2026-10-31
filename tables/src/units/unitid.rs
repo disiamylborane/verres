@@ -39,3 +39,34 @@ impl UnitId {
         Some(Self(id))
     }
 }
+
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct AbsoluteUnitId(UnitId);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct RelativeUnitId(UnitId);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct LogRatioUnitId(UnitId);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct LogPointUnitId(UnitId);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct ExpressionUnitId(UnitId);
+//#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+//pub(super) struct GeometricUnitId(UnitId);
+
+impl AbsoluteUnitId {pub fn unitid(self) -> UnitId {self.0} pub fn new_proven(u: UnitId) -> Self {Self(u)}}
+impl RelativeUnitId {pub fn unitid(self) -> UnitId {self.0} pub fn new_proven(u: UnitId) -> Self {Self(u)}}
+impl LogRatioUnitId {pub fn unitid(self) -> UnitId {self.0} pub fn new_proven(u: UnitId) -> Self {Self(u)}}
+impl LogPointUnitId {pub fn unitid(self) -> UnitId {self.0} pub fn new_proven(u: UnitId) -> Self {Self(u)}}
+
+impl ExpressionUnitId {
+    pub fn unitid(self) -> UnitId {self.0}
+    pub fn new_absolute(abs: AbsoluteUnitId) -> Self {Self(abs.0)}
+    pub fn new_relative(rel: RelativeUnitId) -> Self {Self(rel.0)}
+}
+
+/*impl GeometricUnitId {
+    pub fn unitid(self) -> UnitId {self.0}
+    pub fn new_absolute(abs: AbsoluteUnitId) -> Self {Self(abs.0)}
+    pub fn new_log(log: LogRatioUnitId) -> Self {Self(log.0)}
+}*/
