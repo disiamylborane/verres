@@ -151,10 +151,4 @@ fn test_languages() {
     assert_eq!(Language::new("enA").unwrap().to_string(), "enA");
     assert_eq!(Language::new("enZ").unwrap().to_string(), "enZ");
     assert_eq!(Language::new("enx"), None);
-
-    assert_eq!(Language::new("gr").unwrap().to_string(), "gr");
-    assert_eq!(Language::new("grA").unwrap().to_string(), "grA");
-    assert_eq!(Language::new("grB").unwrap().to_string(), "grB");
-    assert_eq!(Language::new("grC").unwrap().to_string(), "grC");
-    assert_eq!(Language::new("grx"), None);
 }

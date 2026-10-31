@@ -81,7 +81,7 @@ impl SevenRatiosBits {
         let [f, s@..] = &mut le;
 
         let mut i = 0;
-        while i < 8 {
+        while i < MAX_BASE_UNITS {
             match byte_of_ratio(&val[i], &mut s[i], f, i as u8 + 1) {
                 None => return None,
                 Some(empty) => empty,
