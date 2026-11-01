@@ -67,13 +67,13 @@ pub fn test_arith() {
     assert_eq!(value.repr(&units).to_string(), "1000 m2");
 
     let value = Value{
-        num: Number::from_str("15").unwrap(),
+        num: Number::from_str("15000000").unwrap(),
         unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
     }.mul_or_div(Value{
-        num: Number::from_str("15").unwrap(),
+        num: Number::from_str("15000000").unwrap(),
         unit: Unit::parse_expr(vec![(g, Rational::ONE + Rational::ONE)]).unwrap()
     }, false, &units).unwrap();
-    assert_eq!(value.repr(&units).to_string(), "225 m g2");
+    assert_eq!(value.repr(&units).to_string(), "225000000000000 m g2");
 
     let value = Value{
         num: Number::from_str("1").unwrap(),
@@ -85,13 +85,13 @@ pub fn test_arith() {
     assert_eq!(value.repr(&units).to_string(), "3 m %");
 
     let value = Value{
-        num: Number::from_str("15").unwrap(),
+        num: Number::from_str("15000000000000").unwrap(),
         unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
     }.mul_or_div(Value{
-        num: Number::from_str("15").unwrap(),
+        num: Number::from_str("30000000000000").unwrap(),
         unit: Unit::parse_expr(vec![(g, Rational::ONE + Rational::ONE)]).unwrap()
     }, true, &units).unwrap();
-    assert_eq!(value.repr(&units).to_string(), "1 m g-2");
+    assert_eq!(value.repr(&units).to_string(), "1/2 m g-2");
 
     let value = Value{
         num: Number::from_str("15").unwrap(),
@@ -117,7 +117,7 @@ pub fn test_arith() {
     }.mul_or_div(Value{
         num: Number::from_str("10").unwrap(),
         unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
-    }, true, &units).unwrap().quantity(&units).unwrap(), Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap(), &units).unwrap();
+    }, true, &units).unwrap().quantity(&units), Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap(), &units).unwrap();
     assert_eq!(value.repr(&units).to_string(), "-10 dBE");
 
     let value = Value{
@@ -230,6 +230,92 @@ pub fn test_arith() {
         num: Number::from_str("20").unwrap(),
         unit: Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap()
     }, true, &units).unwrap_err();
+
+
+    let value = Value{
+        num: Number::from_str("100000000000").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }.add_frac(Value{
+        num: Number::from_str("1").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "200000000000");
+
+
+    let value = Value{
+        num: Number::from_str("100").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.add_frac(Value{
+        num: Number::from_str("1/2").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }, true, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "50 m");
+
+
+    let value = Value{
+        num: Number::from_str("100").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap()
+    }.add_frac(Value{
+        num: Number::from_str("1/2").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }, true, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "50 szEU°");
+
+
+    let value = Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_over_logslash(Some(dbe), vec![(m, Rational::ONE)]).unwrap()
+    }.powmul(Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1 dBE");
+
+    let value = Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }.powover(Value{
+        num: Number::from_str("0.1").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "10000000000 // m");
+
+    let value = Value{
+        num: Number::from_str("10000000000").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }.powover(Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "10 // cm");
+
+    // TODO: This is counterintuitive, 40%*40% = 16%. Possible solution: +% and -% as separate unit
+    let value = Value{
+        num: Number::from_str("16").unwrap(),
+        unit: Unit::parse_expr(vec![(prc, Rational::ONE)]).unwrap()
+    }.powover(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "40 % // cm");
+
+    let value = Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }.powover(Value{
+        num: Number::from_str("0.1").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "100 dBE // m");
+
+    let value = Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }.powover(Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1 dBE // cm");
 }
 
 
@@ -249,67 +335,67 @@ pub fn test_quantities() {
 
     let unit = Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::ZERO.into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.repr(&units).to_string(), "-1/75 m");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "0 °szEU");
 
     let unit = Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(38, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.repr(&units).to_string(), "6/25 m");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "38 °szEU");
 
     let unit = Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(6, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.repr(&units).to_string(), "1/25 m");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "6 szEU°");
 
     let unit = Unit::parse_expr(vec![(g, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(6000, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.repr(&units).to_string(), "6 kg");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "6000 g");
 
     let unit = Unit::parse_expr(vec![(prc, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(6, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.repr(&units).to_string(), "3/50");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "6 %");
 
     let unit = Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(40, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.num.get_as_f64().round(), 100.0);
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "40 dBm");
 
     let unit = Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(40, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.num.get_as_f64().round(), 10000.0);
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "40 dBE");
 
     let unit = Unit::parse_over_logslash(None, vec![(m, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(40, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.num.get_as_f64().round(), 40.0);
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "40 // m");
 
     let unit = Unit::parse_over_logslash(Some(dbe), vec![(m, Rational::ONE)]).unwrap();
     let value = Value{num: Rational::new_small(40, 1).into_number(), unit: unit.clone()};
-    let canonical = Value::from_quantity_canonical(value.quantity(&units).unwrap(), &units);
+    let canonical = Value::from_quantity_canonical(value.quantity(&units), &units);
     assert_eq!(canonical.num.get_as_f64().round(), 10000.0);
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), unit, &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), unit, &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "40 dBE // m");
-    let reeval = Value::from_quantity(value.quantity(&units).unwrap(), Unit::parse_over_logslash(Some(be), vec![(m, Rational::ONE)]).unwrap(), &units).unwrap();
+    let reeval = Value::from_quantity(value.quantity(&units), Unit::parse_over_logslash(Some(be), vec![(m, Rational::ONE)]).unwrap(), &units).unwrap();
     assert_eq!(reeval.repr(&units).to_string(), "4 BE // m");
 }
 

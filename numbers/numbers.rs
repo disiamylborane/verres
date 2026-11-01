@@ -731,3 +731,18 @@ fn test_numbers() {
     assert_eq!((Number::shrink(0.3) + Rational::new(2, 10).into_number()).to_string(), "0.5");
     assert_eq!((Rational::new(2, 10).into_number() + Rational::new(2, 10).into_number()).to_string(), "2/5");
 }
+
+#[test]
+fn test_rational_size() {
+    assert!(Rational::new(3, 5).is_small());
+    assert!(Rational::new(100000, 7).is_small());
+    assert!(!Rational::new(i64::MAX, 7).is_small());
+
+    assert!(Rational::new(3, 5).as_small().is_some());
+    assert!(Rational::new(100000, 7).as_small().is_none());
+    assert!(Rational::new(i64::MAX, 7).as_small().is_none());
+
+    assert_eq!(Rational::new(1, 2).into_number().get_as_f64(), 0.5);
+    assert_eq!(Rational::new(100, 200).into_number().get_as_f64(), 0.5);
+    assert_eq!(Number::shrink(0.125).get_as_f64(), 0.125);
+}
