@@ -73,6 +73,7 @@ impl ParsedUnitAtom {
 pub struct Unit(pub(super) UnitVariant);
 
 
+#[derive(Debug)]
 /// Numeric value expressed with some specified unit
 pub struct Value {
     /// Numeric value
@@ -116,6 +117,13 @@ pub enum ValueError {
     MayNotDegree,
     WrongLogRatioUnit,
     DimensionalityMismatch
+}
+
+
+#[derive(Debug)]
+pub enum ArithmeticError {
+    DimensionalityMismatch,
+    CannotApplyToUnit,
 }
 
 
@@ -431,6 +439,109 @@ impl Value {
                 Ok(Value { num, unit })
             }
         }
+    }
+
+    /// Addition of two values
+    pub fn add(self, rhs: Value, units: &UnitSystem) -> Result<Value, ArithmeticError> {
+        match (&self.unit.0, &rhs.unit.0) {
+            (UnitVariant::Product { items:_ }, UnitVariant::Product { items:_ }) => {
+                let diml = Value::quantity(&self, units).unwrap();
+                let dimr = Value::quantity(&rhs, units).unwrap();
+                let result = (diml + dimr).ok_or(ArithmeticError::DimensionalityMismatch)?;
+                Ok(Value::from_quantity(result, self.unit, units).unwrap())
+            }
+            (UnitVariant::Product { items:_ }, pt@(UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _)))
+            | (pt@(UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _)), UnitVariant::Product { items:_ }) => {
+                let upt = Unit(pt.clone());
+                let diml = Value::quantity(&self, units).unwrap();
+                let dimr = Value::quantity(&rhs, units).unwrap();
+                let result = (diml + dimr).ok_or(ArithmeticError::DimensionalityMismatch)?;
+                Ok(Value::from_quantity(result, upt, units).unwrap())
+            }
+            _ => Err(ArithmeticError::CannotApplyToUnit),
+        }
+    }
+
+    /// Subtraction of value from value
+    pub fn sub(self, rhs: Value, units: &UnitSystem) -> Result<Value, ArithmeticError> {
+        let diml = Value::quantity(&self, units).unwrap();
+        let dimr = Value::quantity(&rhs, units).unwrap();
+        let result = (diml - dimr).ok_or(ArithmeticError::DimensionalityMismatch)?;
+        match (&self.unit.0, &rhs.unit.0) {
+            (UnitVariant::Product { items:_ }, UnitVariant::Product { items:_ }) => {
+                Ok(Value::from_quantity(result, self.unit, units).unwrap())
+            }
+            (&UnitVariant::LinearPoint(_), UnitVariant::Product { items:_ }) => {
+                Ok(Value::from_quantity(result, self.unit, units).unwrap())
+            }
+            (&UnitVariant::LinearPoint(relative), UnitVariant::LinearPoint(_)) => {
+                Ok(Value::from_quantity(result, Unit(UnitVariant::Product { items: vec![(Prefix::absent(), ExpressionUnitId::new_relative(relative), Rational::ONE)] }), units).unwrap())
+            }
+            _ => Err(ArithmeticError::CannotApplyToUnit),
+        }
+    }
+
+    /// Multiplication or division of two values
+    pub fn mul_or_div(self, rhs: Value, invert: bool, units: &UnitSystem) -> Result<Value, ArithmeticError> {
+        let vl = Value::quantity(&self, units).unwrap();
+        let vr = Value::quantity(&rhs, units).unwrap();
+
+        let unit = {
+            match (self.unit.0, rhs.unit.0) {
+                (UnitVariant::Product { items:litems }, UnitVariant::Product { items:ritems }) => {
+                    let mut items: Vec<(Prefix, ExpressionUnitId, Rational)> = vec![];
+
+                    for (prefix, root, power) in litems {
+                        if let Some(entry) = items.iter_mut().find(|el| el.1 == root) {
+                            entry.2 = entry.2.clone() + power;
+                        }
+                        else {
+                            items.push((prefix, root, power));
+                        }
+                    }
+                    for (prefix, root, power) in ritems {
+                        let power = if invert {-power} else {power};
+                        if let Some(entry) = items.iter_mut().find(|el| el.1 == root) {
+                            entry.2 = entry.2.clone() + power;
+                        }
+                        else {
+                            items.push((prefix, root, power));
+                        }
+                    }
+
+                    Some(Unit(UnitVariant::Product { items }))
+                }
+                (UnitVariant::Product { items:_ }, i @ (UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _))) => {
+                    if vl.dimensionality == Dimensionality::DIMENSIONLESS {Some(Unit(i))}
+                    else {None}
+                }
+                (i @ (UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _)), UnitVariant::Product { items:_ }) => {
+                    if vr.dimensionality == Dimensionality::DIMENSIONLESS {Some(Unit(i))}
+                    else {None}
+                }
+                (UnitVariant::GeometricLog { dimensionless:_, over }, i @ (UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _) | UnitVariant::Product { items:_ }))
+                | (i @ (UnitVariant::LinearPoint(_) | UnitVariant::LogPoint(_, _) | UnitVariant::Product { items:_ }), UnitVariant::GeometricLog { dimensionless:_, over }) => {
+                    if over.is_empty() {Some(Unit(i))}
+                    else {None}
+                }
+                (UnitVariant::GeometricLog { dimensionless, over:lover }, UnitVariant::GeometricLog { dimensionless:_, over:rover } | UnitVariant::Geometric { dimensionless:_, over:rover }) => {
+                    if Self::quantity_of_absolute(Rational::ONE.into_number(), units, &lover).unwrap().dimensionality == Self::quantity_of_absolute(Rational::ONE.into_number(), units, &rover).unwrap().dimensionality {
+                        Some(Unit(UnitVariant::GeometricLog { dimensionless, over:lover }))
+                    }
+                    else {None}
+                }
+                (UnitVariant::Geometric { dimensionless, over:lover }, UnitVariant::GeometricLog { dimensionless:_, over:rover } | UnitVariant::Geometric { dimensionless:_, over:rover }) => {
+                    if Self::quantity_of_absolute(Rational::ONE.into_number(), units, &lover).unwrap().dimensionality == Self::quantity_of_absolute(Rational::ONE.into_number(), units, &rover).unwrap().dimensionality {
+                        Some(Unit(UnitVariant::Geometric { dimensionless, over:lover }))
+                    }
+                    else {None}
+                }
+                _ => None,
+            }
+        };
+
+        let result = if invert {vl / vr} else {vl * vr};
+        Ok(Value::from_quantity(result, unit.ok_or(ArithmeticError::CannotApplyToUnit)?, units).unwrap())
     }
 
     printer!{

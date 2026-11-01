@@ -1,4 +1,4 @@
-use std::assert_matches;
+use std::{assert_matches, str::FromStr};
 
 use numbers::{Number, Rational};
 
@@ -6,6 +6,232 @@ use crate::{
     strings::{Language, Localized, Name, Symbol}, units::{BaseUnitDefinition, Dimensionality, Prefix, Quantity, Unit, UnitDefinition, UnitId, UnitSystem, Value, definition::{AbsoluteUnitDefinition, LogPointUnitDefinition, LogRatioUnitDefinition, RelativeUnitDefinition, UnitNames}, unit::{ParsedUnitAtom, UnitVariant}
     }
 };
+
+
+#[test]
+pub fn test_arith() {
+    let units = testing_system();
+
+    let m = ParsedUnitAtom::parse("m", &units).unwrap();
+    let km = ParsedUnitAtom::parse("km", &units).unwrap();
+    let cm = ParsedUnitAtom::parse("cm", &units).unwrap();
+    let g = ParsedUnitAtom::parse("g", &units).unwrap();
+    let prc = ParsedUnitAtom::parse("%", &units).unwrap();
+    let sz_eu_pt = ParsedUnitAtom::parse("'szEU", &units).unwrap();
+    let sz_eu_rg = ParsedUnitAtom::parse("szEU'", &units).unwrap();
+    let dbe = ParsedUnitAtom::parse("dBE", &units).unwrap();
+    let dbm = ParsedUnitAtom::parse("dBm", &units).unwrap();
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "30 m");
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(km, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "3003/200 km");
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(km, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "15015 m");
+    
+    Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(g, Rational::ONE)]).unwrap()
+    }, &units).unwrap_err();
+
+    let value = Value{
+        num: Number::from_str("1").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("1").unwrap(),
+        unit: Unit::parse_expr(vec![(km, Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1000 m2");
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(g, Rational::ONE + Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "225 m g2");
+
+    let value = Value{
+        num: Number::from_str("1").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(prc, Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "3 m %");
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(g, Rational::ONE + Rational::ONE)]).unwrap()
+    }, true, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1 m g-2");
+
+    let value = Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }, true, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "3/2 m");
+
+    let value = Value{
+        num: Number::from_str("-10").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("15").unwrap(),
+        unit: Unit::parse_expr(vec![(m, Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "3/2 m");
+
+    let value = Value::from_quantity(Value{
+        num: Number::from_str("1").unwrap(),
+        unit: Unit::parse_expr(vec![]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("10").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }, true, &units).unwrap().quantity(&units).unwrap(), Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap(), &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "-10 dBE");
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("7").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "10 dBE");
+
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "6 °szEU");
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "5 °szEU");
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "5 °szEU");
+
+    Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.add(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }, &units).unwrap_err();
+
+
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.sub(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(cm, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "0 °szEU");
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.sub(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1 °szEU");
+
+    Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_rg, Rational::ONE)]).unwrap()
+    }.sub(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }, &units).unwrap_err();
+
+    let value = Value{
+        num: Number::from_str("3").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }.sub(Value{
+        num: Number::from_str("2").unwrap(),
+        unit: Unit::parse_expr(vec![(sz_eu_pt, Rational::ONE)]).unwrap()
+    }, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "1 szEU°");
+
+
+    let value = Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }, false, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "60 dBm");
+
+
+    let value = Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbe, Rational::ONE)]).unwrap()
+    }, true, &units).unwrap();
+    assert_eq!(value.repr(&units).to_string(), "-20 dBm");
+
+
+    Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap()
+    }.mul_or_div(Value{
+        num: Number::from_str("20").unwrap(),
+        unit: Unit::parse_expr(vec![(dbm, Rational::ONE)]).unwrap()
+    }, true, &units).unwrap_err();
+}
+
 
 
 #[test]

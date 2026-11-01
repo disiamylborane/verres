@@ -5,7 +5,7 @@ use numbers::Number;
 
 use crate::strings::{Localized, Name, Symbol};
 
-use super::{Quantity, Prefix, Dimensionality};
+use super::{Quantity, Prefix};
 
 
 /// Base unit is always an absolute unit
