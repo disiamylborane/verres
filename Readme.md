@@ -8,9 +8,9 @@ and theories.
 **Experiment storage part**
 
 - [x] readable and easily pronounced identifiers based on toki pona rules
-- [ ] \(Stubbed) numbers that can handle arbitrary precision rationals and inexact floats
+- [Stubbed] numbers that can handle arbitrary precision rationals and inexact floats
 - [x] i18n framework for language entity names
-- [ ] engine for units of measurement conversion and well-defined numeric arithmetics
+- [x] engine for units of measurement conversion and well-defined numeric arithmetics
 - [ ] directed acyclic concept graph for theory-agnostic real world objects
 - [ ] data-only algebraic type system having numbers and objects as primitives for experiment results
 - [ ] arithmetics for the type system values

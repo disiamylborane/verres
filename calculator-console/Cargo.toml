@@ -1,0 +1,8 @@
+[package]
+name = "calculator-console"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+calculator-parsers = {path = "../calculator-parsers"}
+rustyline = "19.0.0"

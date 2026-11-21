@@ -14,10 +14,15 @@ pub struct UnitSystem {
 }
 
 
-pub(crate) enum UnitType {
+/// Type-aware [`UnitId`]
+pub enum TypedUnitId {
+    /// Id of the unit with [`AbsoluteUnitDefinition`]
     Absolute(AbsoluteUnitId),
+    /// Id of the unit with [`RelativeUnitDefinition`]
     Relative(RelativeUnitId),
+    /// Id of the unit with [`LogRatioUnitDefinition`]
     LogRatio(LogRatioUnitId),
+    /// Id of the unit with [`LogPointUnitDefinition`]
     LogPoint(LogPointUnitId),
 }
 
@@ -117,12 +122,13 @@ impl UnitSystem {
         unit_def.names.description.insert(lang, description.into());
     }
 
-    pub(super) fn get_type(&self, id: UnitId) -> UnitType {
+    /// Detect the kind of a specific unit
+    pub fn get_kind(&self, id: UnitId) -> TypedUnitId {
         match self[id].kind {
-            UnitKind::Absolute(_) => UnitType::Absolute(AbsoluteUnitId::new_proven(id)),
-            UnitKind::Relative(_) => UnitType::Relative(RelativeUnitId::new_proven(id)),
-            UnitKind::LogDimensionless(_) => UnitType::LogRatio(LogRatioUnitId::new_proven(id)),
-            UnitKind::LogPoint(_) => UnitType::LogPoint(LogPointUnitId::new_proven(id)),
+            UnitKind::Absolute(_) => TypedUnitId::Absolute(AbsoluteUnitId::new_proven(id)),
+            UnitKind::Relative(_) => TypedUnitId::Relative(RelativeUnitId::new_proven(id)),
+            UnitKind::LogDimensionless(_) => TypedUnitId::LogRatio(LogRatioUnitId::new_proven(id)),
+            UnitKind::LogPoint(_) => TypedUnitId::LogPoint(LogPointUnitId::new_proven(id)),
         }
     }
 

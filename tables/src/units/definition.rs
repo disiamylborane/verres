@@ -37,6 +37,7 @@ pub struct UnitDefinition {
 }
 
 
+/// Unit that is a product of a coefficient and powers of base unit
 pub struct AbsoluteUnitDefinition {
     /// Value of one unit
     pub scale: Quantity,
@@ -44,6 +45,8 @@ pub struct AbsoluteUnitDefinition {
     pub allows_prefixes: Option<Prefix>
 }
 
+
+/// Scale or degree unit that has a non-zero linear offset (like temperature scales)
 pub struct RelativeUnitDefinition {
     /// Value representing the step of one unit
     pub scale: Quantity,
@@ -51,6 +54,8 @@ pub struct RelativeUnitDefinition {
     pub offset: Number
 }
 
+
+/// Logarithmic units of ratio between values (decibels, octaves, etc.)
 pub struct LogRatioUnitDefinition {
     /// Ratio of magnitudes meant by 1 this unit
     pub power_per_unit: Number,
@@ -58,6 +63,8 @@ pub struct LogRatioUnitDefinition {
     pub allows_prefixes: Option<Prefix>
 }
 
+
+/// Logarithmic units of value (dB SPL etc.)
 pub struct LogPointUnitDefinition {
     /// Value corresponding to 0 this unit
     pub zero_unit: Quantity,

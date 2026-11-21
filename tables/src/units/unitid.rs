@@ -25,7 +25,7 @@ impl NimiPonaConvert for UnitId {
 
 impl UnitId {
     /// Create an identifier for a base unit
-    pub(super) const fn base(id: u8) -> Self {
+    pub const fn base(id: u8) -> Self {
         assert!(id < MAX_BASE_UNITS);
         Self(id as u16)
     }

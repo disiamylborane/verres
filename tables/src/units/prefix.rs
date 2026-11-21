@@ -143,39 +143,39 @@ impl PrefixMeaning {
             PrefixMeaning::DecimalBig(ExtendedPrefix::Low(LowPrefix::P1)) => Rational::new_small(10, 1),
             PrefixMeaning::DecimalBig(ExtendedPrefix::Low(LowPrefix::P2)) => Rational::new_small(100, 1),
             PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P3)) => Rational::new_small(1000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P6)) => Rational::new(1_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P9)) => Rational::new(1_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P12)) => Rational::new(1_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P15)) => Rational::new(1_000_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P18)) => Rational::new(1_000_000_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P21)) => Rational::new_i128(1_000_000_000_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P24)) => Rational::new_i128(1_000_000_000_000_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P27)) => Rational::new_i128(1_000_000_000_000_000_000_000_000_000, 1),
-            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P30)) => Rational::new_i128(1_000_000_000_000_000_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P6)) => Rational::new_med(1_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P9)) => Rational::new_med(1_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P12)) => Rational::new_med(1_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P15)) => Rational::new_med(1_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P18)) => Rational::new_med(1_000_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P21)) => Rational::new_big(1_000_000_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P24)) => Rational::new_big(1_000_000_000_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P27)) => Rational::new_big(1_000_000_000_000_000_000_000_000_000, 1),
+            PrefixMeaning::DecimalBig(ExtendedPrefix::Base(MilleniumPrefix::P30)) => Rational::new_big(1_000_000_000_000_000_000_000_000_000_000, 1),
 
             PrefixMeaning::DecimalSmall(ExtendedPrefix::Low(LowPrefix::P1)) => Rational::new_small(1, 10),
             PrefixMeaning::DecimalSmall(ExtendedPrefix::Low(LowPrefix::P2)) => Rational::new_small(1, 100),
             PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P3)) => Rational::new_small(1, 1000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P6)) => Rational::new(1, 1_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P9)) => Rational::new(1, 1_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P12)) => Rational::new(1, 1_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P15)) => Rational::new(1, 1_000_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P18)) => Rational::new(1, 1_000_000_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P21)) => Rational::new_i128(1, 1_000_000_000_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P24)) => Rational::new_i128(1, 1_000_000_000_000_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P27)) => Rational::new_i128(1, 1_000_000_000_000_000_000_000_000_000),
-            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P30)) => Rational::new_i128(1, 1_000_000_000_000_000_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P6)) => Rational::new_med(1, 1_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P9)) => Rational::new_med(1, 1_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P12)) => Rational::new_med(1, 1_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P15)) => Rational::new_med(1, 1_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P18)) => Rational::new_med(1, 1_000_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P21)) => Rational::new_big(1, 1_000_000_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P24)) => Rational::new_big(1, 1_000_000_000_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P27)) => Rational::new_big(1, 1_000_000_000_000_000_000_000_000_000),
+            PrefixMeaning::DecimalSmall(ExtendedPrefix::Base(MilleniumPrefix::P30)) => Rational::new_big(1, 1_000_000_000_000_000_000_000_000_000_000),
 
             PrefixMeaning::Binary(MilleniumPrefix::P3) => Rational::new_small(1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P6) => Rational::new(1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P9) => Rational::new(1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P12) => Rational::new(1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P15) => Rational::new(1024*1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P18) => Rational::new_i128(1024*1024*1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P21) => Rational::new_i128(1024*1024*1024*1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P24) => Rational::new_i128(1024*1024*1024*1024*1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P27) => Rational::new_i128(1024*1024*1024*1024*1024*1024*1024*1024*1024, 1),
-            PrefixMeaning::Binary(MilleniumPrefix::P30) => Rational::new_i128(1024*1024*1024*1024*1024*1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P6) => Rational::new_med(1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P9) => Rational::new_med(1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P12) => Rational::new_med(1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P15) => Rational::new_med(1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P18) => Rational::new_big(1024*1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P21) => Rational::new_big(1024*1024*1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P24) => Rational::new_big(1024*1024*1024*1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P27) => Rational::new_big(1024*1024*1024*1024*1024*1024*1024*1024*1024, 1),
+            PrefixMeaning::Binary(MilleniumPrefix::P30) => Rational::new_big(1024*1024*1024*1024*1024*1024*1024*1024*1024*1024, 1),
         }
     }
 }
@@ -218,9 +218,9 @@ fn test_prefixes() {
     let row_small = ["m", "μ", "n", "p", "f", "a", "z", "y", "r", "q"];
     let row_bin = ["ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi", "Ri", "Qi"];
 
-    let mut big = Rational::new(1000, 1);
-    let mut small = Rational::new(1, 1000);
-    let mut bin = Rational::new(1024, 1);
+    let mut big = Rational::new_small(1000, 1);
+    let mut small = Rational::new_small(1, 1000);
+    let mut bin = Rational::new_small(1024, 1);
     for v in 0..row_big.len() {
         let pbig = Prefix::parse(row_big[v]).unwrap().meaning();
         let psmall = Prefix::parse(row_small[v]).unwrap().meaning();
@@ -230,8 +230,8 @@ fn test_prefixes() {
         assert_eq!(psmall, small.clone());
         assert_eq!(pbin, bin.clone());
 
-        big = big * Rational::new(1000, 1);
-        small = small * Rational::new(1, 1000);
-        bin = bin * Rational::new(1024, 1);
+        big = big * Rational::new_small(1000, 1);
+        small = small * Rational::new_small(1, 1000);
+        bin = bin * Rational::new_small(1024, 1);
     }
 }

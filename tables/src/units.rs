@@ -40,13 +40,13 @@ mod prefix;
 pub use prefix::Prefix;
 
 mod definition;
-pub use definition::{UnitDefinition, BaseUnitDefinition, UnitKind};
+pub use definition::{UnitDefinition, BaseUnitDefinition, UnitKind, UnitNames, AbsoluteUnitDefinition, LogPointUnitDefinition, LogRatioUnitDefinition, RelativeUnitDefinition};
 
 mod unit_system;
-pub use unit_system::{UnitSystem};
+pub use unit_system::{UnitSystem, TypedUnitId};
 
 mod unit;
-pub use unit::{Unit, Value};
+pub use unit::{Unit, ParsedUnitAtom, Value, UnitParsingError, ValueError, ArithmeticError};
 
 #[cfg(test)]
 mod tests;

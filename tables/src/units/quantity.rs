@@ -52,6 +52,6 @@ impl Quantity {
     /// Take a power of a quantity
     pub fn pow(self, r: Rational) -> Quantity {
         let dimensionality = self.dimensionality.pow(&r);
-        Self{value: self.value.powr(r), dimensionality}
+        Self{value: self.value.pown(r.into_number()), dimensionality}
     }
 }

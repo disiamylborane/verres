@@ -7,6 +7,6 @@ edition = "2024"
 path = "numbers.rs"
 
 [dependencies]
-rug = "1.30.0"
+dashu = "0.6.2"
 serde = "1.0.229"
 serde_with = "3.24.0"

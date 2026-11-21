@@ -3,25 +3,50 @@ use core::cmp::Ordering;
 
 use numbers::{Number, Rational};
 
-use crate::units::{Dimensionality, Prefix, Quantity, definition::{LogPointUnitDefinition, LogRatioUnitDefinition, RelativeUnitDefinition, as_prefixed_options}, unit_system::UnitType, unitid::{ExpressionUnitId, LogPointUnitId, LogRatioUnitId, RelativeUnitId}};
+use crate::units::{Dimensionality, Prefix, Quantity, definition::{LogPointUnitDefinition, LogRatioUnitDefinition, RelativeUnitDefinition, as_prefixed_options}, unit_system::TypedUnitId, unitid::{ExpressionUnitId, LogPointUnitId, LogRatioUnitId, RelativeUnitId}};
 
 use super::{UnitId, UnitSystem};
 
+
+/// Unit expressed as a single symbol
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ParsedUnitAtom {
-    Expression{prefix: Prefix, root: ExpressionUnitId},
-    LinPoint{root: RelativeUnitId},
-    LogRatio{prefix: Prefix, root: LogRatioUnitId},
-    LogPoint{prefix: Prefix, root: LogPointUnitId},
+    /// Power expression of units
+    Expression{
+        /// Decimal, or binary, or null prefix
+        prefix: Prefix,
+        /// Absolute unit or vector relative unit
+        root: ExpressionUnitId
+    },
+    /// Point value expressed in relative units
+    LinPoint{
+        /// Unit Id
+        root: RelativeUnitId
+    },
+    /// Log ratio unit
+    LogRatio{
+        /// Decimal, or binary, or null prefix
+        prefix: Prefix,
+        /// Unit Id
+        root: LogRatioUnitId
+    },
+    /// Point value expressed in logarithmic units
+    LogPoint{
+        /// Decimal, or binary, or null prefix
+        prefix: Prefix,
+        /// Unit Id
+        root: LogPointUnitId
+    },
 }
 
 
 impl ParsedUnitAtom {
+    /// Convert string into parsed unit
     pub fn parse(symbol: &str, units: &UnitSystem) -> Result<Self, UnitParsingError> {
         if let Some(prefixed) = symbol.strip_prefix(['°', '\'']) {
             for (prefix, sym) in as_prefixed_options(prefixed, true) {
                 if let Some((root, def)) = units.get_by_symbol(sym, true) {
-                    if let UnitType::Relative(uroot) = units.get_type(root) {
+                    if let TypedUnitId::Relative(uroot) = units.get_kind(root) {
                         return if def.allows_prefixes() || prefix == Prefix::absent() {
                             Ok(Self::LinPoint { root: uroot })
                         }
@@ -35,7 +60,7 @@ impl ParsedUnitAtom {
         else if let Some(suffixed) = symbol.strip_suffix(['°', '\'']) {
             for (prefix, sym) in as_prefixed_options(suffixed, true) {
                 if let Some((root, def)) = units.get_by_symbol(sym, true) {
-                    if let UnitType::Relative(uroot) = units.get_type(root) {
+                    if let TypedUnitId::Relative(uroot) = units.get_kind(root) {
                         return if def.allows_prefixes() || prefix == Prefix::absent() {
                             Ok(Self::Expression { prefix, root: ExpressionUnitId::new_relative(uroot) })
                         }
@@ -53,12 +78,12 @@ impl ParsedUnitAtom {
                         return Err(UnitParsingError::MustNotHavePrefix(root))
                     }
 
-                    return match units.get_type(root) {
-                        UnitType::Absolute(root) => 
+                    return match units.get_kind(root) {
+                        TypedUnitId::Absolute(root) => 
                             Ok(Self::Expression { prefix, root: ExpressionUnitId::new_absolute(root) }),
-                        UnitType::Relative(_) => unreachable!(),
-                        UnitType::LogRatio(root) => Ok(Self::LogRatio { prefix, root }),
-                        UnitType::LogPoint(root) => Ok(Self::LogPoint { prefix, root }),
+                        TypedUnitId::Relative(_) => unreachable!(),
+                        TypedUnitId::LogRatio(root) => Ok(Self::LogRatio { prefix, root }),
+                        TypedUnitId::LogPoint(root) => Ok(Self::LogPoint { prefix, root }),
                     }
                 }
             }
@@ -73,7 +98,7 @@ impl ParsedUnitAtom {
 pub struct Unit(pub(super) UnitVariant);
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 /// Numeric value expressed with some specified unit
 pub struct Value {
     /// Numeric value
@@ -94,6 +119,7 @@ pub(super) enum UnitVariant {
 }
 
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub enum UnitParsingError {
     IllegalAtomic(ParsedUnitAtom),
@@ -106,6 +132,7 @@ pub enum UnitParsingError {
     SymbolNotFound(String),
 }
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub enum ValueError {
     DegreesMayNotPrefix,
@@ -120,6 +147,7 @@ pub enum ValueError {
 }
 
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub enum ArithmeticError {
     DimensionalityMismatch,
@@ -128,10 +156,9 @@ pub enum ArithmeticError {
 
 
 
-
 impl Unit {
     /// Dimensionless unit
-    pub fn one() -> Self {Self(UnitVariant::Product { items: vec![] })}
+    pub const fn one() -> Self {Self(UnitVariant::Product { items: vec![] })}
 
     fn parse_ordinary(elements: Vec<(ParsedUnitAtom, Rational)>) -> Result<Vec<(Prefix, ExpressionUnitId, Rational)>, UnitParsingError> {
         elements.into_iter()
@@ -367,7 +394,7 @@ impl Value {
         for (root, exponent) in qty.dimensionality.iter_base_units(false) {
             let prefix = engine[root].allows_prefixes.unwrap_or(Prefix::absent());
             if prefix != Prefix::absent() {
-                value = value / prefix.meaning().pow(exponent.clone());
+                value = value / prefix.meaning().into_number().powr(exponent.clone());
             }
             linear_elements.push((prefix, ExpressionUnitId::new_absolute(root), exponent));
         }
@@ -407,7 +434,7 @@ impl Value {
                 if allows_prefixes.is_none() && prefix != Prefix::absent() {
                     return Err(ValueError::DegreesMayNotPrefix)
                 }
-                Ok( Value{num: Number::shrink(value.get_as_f64().log(log_base.get_as_f64()) / prefix.meaning().get_as_f64()), unit})
+                Ok( Value{num: value.logn(log_base.clone()) / prefix.meaning().into_number(), unit})
             }
             UnitVariant::Geometric { dimensionless, over } => {
                 let over_quantity = Self::quantity_of_absolute(Rational::ONE.into_number(), units, over);
@@ -439,7 +466,7 @@ impl Value {
 
                 let LogRatioUnitDefinition{power_per_unit, allows_prefixes:_} = &units[*root];
 
-                let num = Number::shrink(result_value.get_as_f64().log(power_per_unit.get_as_f64()) / prefix.meaning().get_as_f64());
+                let num = result_value.logn(power_per_unit.clone()) / prefix.meaning().into_number();
                 Ok(Value { num, unit })
             }
         }
@@ -578,11 +605,11 @@ impl Value {
         }
 
         let unit = match self.unit.0 {
-            UnitVariant::Product { items:_ } => self.unit,
-            UnitVariant::LinearPoint(_) => self.unit,
+            UnitVariant::Product { items:_ } => Unit::one(),
+            UnitVariant::LinearPoint(_) => Unit::one(),
             UnitVariant::Geometric { dimensionless, over:_ } => Unit(UnitVariant::Product { items: Vec::from_iter(dimensionless.map(|d|(d.0, d.1, Rational::ONE))) }),
             UnitVariant::GeometricLog { dimensionless, over:_ } => Unit(UnitVariant::GeometricLog { dimensionless, over: vec![] }),
-            UnitVariant::LogPoint(_, _) => self.unit,
+            UnitVariant::LogPoint(_, _) => Unit::one(),
         };
 
         let result = vl.value.pown(vr.value);
@@ -594,9 +621,6 @@ impl Value {
     pub fn powover(self, rhs: Value, units: &UnitSystem) -> Result<Value, ArithmeticError> {
         let vl = Value::quantity(&self, units);
         let vr = Value::quantity(&rhs, units);
-
-        dbg!(&vl);
-        dbg!(&vr);
 
         if vl.dimensionality != Dimensionality::DIMENSIONLESS {
             return Err(ArithmeticError::DimensionalityMismatch)
@@ -626,7 +650,6 @@ impl Value {
         };
 
         let result = vl.value.pown(Rational::ONE.into_number() / vr.value);
-        dbg!(&result);
         Ok(Value::from_quantity(Quantity { value: result, dimensionality: vr.dimensionality.pow(&-Rational::ONE) }, unit, units).unwrap())
     }
 
