@@ -3,6 +3,10 @@
 The formal language for describing and storing typed observed data
 and theories.
 
+## Development web demo
+
+Check out web demo at https://disiamylborane.github.io/verres/webdemo/.
+
 ## Roadmap
 
 **Experiment storage part**
