@@ -79,7 +79,7 @@ impl ParsedUnitAtom {
                     }
 
                     return match units.get_kind(root) {
-                        TypedUnitId::Absolute(root) => 
+                        TypedUnitId::Absolute(root) =>
                             Ok(Self::Expression { prefix, root: ExpressionUnitId::new_absolute(root) }),
                         TypedUnitId::Relative(_) => unreachable!(),
                         TypedUnitId::LogRatio(root) => Ok(Self::LogRatio { prefix, root }),
@@ -119,7 +119,7 @@ pub(super) enum UnitVariant {
 }
 
 
-#[doc(hidden)]
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum UnitParsingError {
     IllegalAtomic(ParsedUnitAtom),
@@ -132,7 +132,7 @@ pub enum UnitParsingError {
     SymbolNotFound(String),
 }
 
-#[doc(hidden)]
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum ValueError {
     DegreesMayNotPrefix,
@@ -147,7 +147,7 @@ pub enum ValueError {
 }
 
 
-#[doc(hidden)]
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum ArithmeticError {
     DimensionalityMismatch,
@@ -305,21 +305,6 @@ impl Unit {
         }
     }}
 }
-
-
-
-/*fn atomic_combinable(at: ParsedUnitAtom, units: &UnitSystem) -> Option<(Prefix, ExpressionUnitId)> {
-    let ParsedUnitAtom{prefix, root, degree} = at;
-    match (degree, units.get_type(root)) {
-        (ParsedDegree::None, UnitType::Absolute(root)) => {
-            Some((prefix, ExpressionUnitId::new_absolute(root)))
-        }
-        (ParsedDegree::Postfix, UnitType::Relative(root)) => {
-            Some((prefix, ExpressionUnitId::new_relative(root)))
-        }
-        _ => None
-    }
-}*/
 
 
 
@@ -666,4 +651,3 @@ impl Value {
         }
     }
 }
-

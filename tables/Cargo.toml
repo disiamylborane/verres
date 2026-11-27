@@ -11,3 +11,5 @@ compact_str = "0.10.0"
 ribbit = "0.2.1"
 nimi-pona = {path = "../nimi-pona"}
 numbers = {path = "../numbers"}
+petgraph = "0.8.3"
+uuid = { version = "1.29.3", features = ["v4", "v7", "js"] }

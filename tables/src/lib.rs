@@ -2,6 +2,9 @@
 
 #![warn(missing_docs)]
 
+use crate::units::UnitSystem;
+use crate::objects::ObjectGraph;
+
 
 macro_rules! printer {
     (
@@ -28,3 +31,13 @@ macro_rules! printer {
 
 pub mod strings;
 pub mod units;
+pub mod objects;
+
+
+/// Experimental data storage
+pub struct Tables {
+    /// Global unit system used in a type system for this engine
+    pub units: UnitSystem,
+    /// A directed acyclic graph of real world objects having non-formalizable but well known definitions
+    pub objects: ObjectGraph,
+}

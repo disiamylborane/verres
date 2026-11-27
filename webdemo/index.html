@@ -1,66 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" href="/favicon.ico" sizes="16x16">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
     <title>Verres unit-aware calculator</title>
 
     <style>
-    code {
-        font-family: monospace;
-        background-color: #f4f4f5;
-        border: 1px solid #d4d4d8;
-        border-radius: 1px;
-        padding: 1px 2px;
-        cursor: pointer;
-        display: inline-block;
-        user-select: all;
-        transition: background-color 0.2s, border-color 0.2s;
-        font-size: 0.9rem;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-    }
-    pre {
-        margin-top: 0;
-        margin-bottom: 0;
-    }
+h1 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin-bottom: 0.2em;
+    margin-top: 0.2em;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin-bottom: 0.1em;
+    margin-top: 0.1em;
+    line-height: 1.15;
+}
+
+h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin-bottom: 0em;
+    margin-top: 0em;
+    line-height: 1.1;
+}
+
+code {
+    background-color: #f4f4f5;
+    border: 1px solid #d4d4d8;
+    user-select: all;
+    font-size: 1rem;
+    display: inline-block;
+}
+pre {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+select[size] {
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    box-sizing: border-box;
+}
+
+select[size] option {
+    padding-right: 16px;
+    padding-left: 8px;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.units-box {
+    display: grid;
+    grid-template-columns: 15ch minmax(0, 1fr);
+    gap: 0.5rem;
+    box-sizing: border-box;
+}
+
+.objects-box {
+    display: grid;
+    grid-template-columns: 25ch minmax(0, 1fr);
+    gap: 0.5rem;
+    box-sizing: border-box;
+}
+
+select {
+    height: clamp(4lh, 20dvh, 15lh);
+}
+
+.details-box {
+    overflow-y: auto;
+    white-space: pre-line;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+    height: 0; min-height: 100%;
+}
     </style>
 </head>
 <body>
-    <div>
-        <h1>Verres unit-aware calculator demo</h1>
-        <p>
-            This page is a playground for the syntax of <code>verres</code> type system.
-        </p>
-        <h2>Syntax</h2>
-        <h3>Values</h3>
-        <ul>
-            <li>Number: <code>42</code>, <code>42.2</code> (rational), <code>42/5</code> (rational, no spaces), <code>42.2~</code> (imprecise real), <code>42.2~24</code> (imprecise real with precision of 24 bits)</li>
-            <li>Number with unit: <code>42 m</code>, <code>42f m2</code>, <code>42 kg m2 s-1</code>, <code>42 N kg-1</code></li>
-        </ul>
-        <h3>Expressions</h3>
-        <ul>
-            <li>Addition: <code>4 m + 200 cm</code> is <code>6 m</code></li>
-            <li>Subtraction: <code>4 m - 200 cm</code> is <code>2 m</code></li>
-            <li>Multiplication: <code>4 m * 200 cm</code> is <code>8 m2</code></li>
-            <li>Division: <code>4 m / 200 cm</code> is <code>2</code>. Warning: a/b without spaces is a rational literal, <code>3 / 5 m = 0.6 m-1</code>, but <code>3/5 m = 0.6 m</code></li>
-            <li>Exponential growth distribution: <code>256 // 2 min</code> is <code>16 // min</code> (growth by 256 times per minute, expressed as times per minute)</li>
-            <li>Exponential growth accumulation: <code>16 // min ** 30 s</code> is <code>4</code> (growth by 16 times per minute, how much per half a minute)</li>
-            <li>Conversion: <code>4 m | cm</code> is <code>400 cm</code></li>
-            <li>Conversion to base units: <code>4 N ||</code> is <code>4 m kg s-2</code></li>
-            <li>Brackets for grouping: <code>((16 // min ||) ** 30 s) * 2</code> is <code>8</code></li>
-        </ul>
-        <h3>Variables</h3>
-        <ul>
-            <li>Introduce: <code>_x = 3</code> (Variables always have prefix _)</li>
-            <li>Use: <code>_x + _x</code> (Variables always have prefix _)</li>
-            <li>_ is &lt;last answer&gt;: <code>2</code> = <code>2</code>, in the next statement <code>_</code> = <code>2</code></li>
-        </ul>
-        <h3>Helpers</h3>
-        <ul>
-            <li>Type <code>?</code> for a list of units</li>
-            <li>Type <code>? &lt;unit name&gt;</code> for a detailed information on unit</li>
-        </ul>
+    <div class="container">
+        <div class="card">
+            <h1>Verres unit-aware calculator demo</h1>
+            <p>
+                This page is a playground for the syntax of <code>verres</code> type system.
+            </p>
+            <details>
+                <summary><h2 style="display: inline;">Syntax</h2></summary>
+                <h3>Values</h3>
+                <ul>
+                    <li>Number: <code>42</code>, <code>42.2</code> (rational), <code>42/5</code> (rational, no spaces), <code>42.2~</code> (imprecise real), <code>42.2~24</code> (imprecise real with precision of 24 bits)</li>
+                    <li>Number with unit: <code>42 m</code>, <code>42~ m2</code>, <code>42 kg m2 s-1</code>, <code>42 N kg-1</code></li>
+                </ul>
+                <h3>Expressions</h3>
+                <ul>
+                    <li>Addition and subtraction: <code>4 m + 200 cm</code> is <code>6 m</code>, <code>4 m - 200 cm</code> is <code>2 m</code></li>
+                    <li>Multiplication and division: <code>4 m * 200 cm</code> is <code>8 m2</code>, <code>4 m / 200 cm</code> is <code>2</code>. Warning: a/b without spaces is a rational literal, <code>3 / 5 m = 0.6 m-1</code>, but <code>3/5 m = 0.6 m</code></li>
+                    <li>Accumulation operations: a +^ b = a * (1 + b), a -^ b = a * (1 - b), <code>5 m +^ 20 %</code> is <code>6 m</code>, <code>10 kg -^ 20 %</code> is <code>8 kg</code></li>
+                    <li>Exponential growth distribution: <code>256 // 2 min</code> is <code>16 // min</code> (growth by 256 times per minute, expressed as times per minute)</li>
+                    <li>Exponential growth accumulation: <code>16 // min ** 30 s</code> is <code>4</code> (growth by 16 times per minute, how much per half a minute)</li>
+                    <li>Conversion: <code>4 m | cm</code> is <code>400 cm</code></li>
+                    <li>Conversion to base units: <code>4 N ||</code> is <code>4 m kg s-2</code></li>
+                    <li>Brackets for grouping: <code>((16 // min ||) ** 30 s) * 2</code> is <code>8</code></li>
+                </ul>
+                <h3>Variables</h3>
+                <ul>
+                    <li>Introduce: <code>_x = 3</code> (Variables always have prefix _)</li>
+                    <li>Use: <code>_x + _x</code> (Variables always have prefix _)</li>
+                    <li>_ is &lt;last answer&gt;: <code>2</code> = <code>2</code>, in the next statement <code>_</code> = <code>2</code></li>
+                </ul>
+                <h3>Helpers</h3>
+                <ul>
+                    <li>Type <code>?</code> for a list of units</li>
+                    <li>Type <code>? &lt;unit name&gt;</code> for a detailed information on unit</li>
+                </ul>
+            </details>
+        </div>
+
+
+        <fieldset class="group-box">
+            <legend>Units</legend>
+            <div class="card units-box">
+                <select id="units_list" size="4"></select>
+                <div id="unit_details" class="details-box" aria-live="polite">Select an element...</div>
+            </div>
+        </fieldset>
+
+
+        <fieldset class="group-box">
+            <legend>Objects</legend>
+            <div class="card objects-box">
+                <select id="objects_list" size="4"></select>
+                <div id="object_details" class="details-box" aria-live="polite">Select an element...</div>
+            </div>
+        </fieldset>
+
+
+        <div hidden>
+            <select name="default prefix">
+              <option value="null" selected>--Disallowed--</option>
+              <option value="">Absent</option>
+              <option value="k">k</option>
+              <option value="d">d</option>
+              <option value="c">c</option>
+              <option value="m">m</option>
+            </select>
+            <div>
+                <input type="text" name="scale" placeholder="1" required />
+            </div>
+            <div>
+                <input type="text" name="scale" placeholder="1" required />
+                <input type="text" name="offset" placeholder="0" required />
+            </div>
+            <div>
+                <input type="text" name="times per unit" placeholder="1" required />
+            </div>
+            <div>
+                <input type="text" name="times per unit" placeholder="1" required />
+                <input type="text" name="offset" placeholder="0" required />
+            </div>
+        </div>
     </div>
 
     <div id="terminal">
@@ -69,11 +178,52 @@
     <script type="module">
         import init, { CalculatorObject } from './wasm-pkg/calculator_parsers.js';
 
-        const term = document.getElementById('terminal');
-
-        await init();
+        const compressedResponse = await fetch('./wasm-pkg/calculator_parsers_bg.wasm.gz');
+        const decompressedStream = compressedResponse.body.pipeThrough(new DecompressionStream('gzip'));
+        const wasmResponse = new Response(decompressedStream, {headers: { 'Content-Type': 'application/wasm' }});
+        await init(wasmResponse);
 
         var co = new CalculatorObject();
+
+        const term = document.getElementById('terminal');
+
+        const unit_list_box = document.getElementById('units_list');
+        const unit_detail_pane = document.getElementById('unit_details');
+
+        const object_list_box = document.getElementById('objects_list');
+        const object_detail_pane = document.getElementById('object_details');
+
+        function refresh_units() {
+            unit_list_box.options.length = 0;
+            const items = co.list_of_units();
+            items.sort();
+            items.forEach((item, i) => unit_list_box.add(new Option(item)));
+        }
+
+        function display_unit_details() {
+            const val = unit_list_box.value;
+            const res = co.execute("?" + val);
+            unit_detail_pane.innerHTML = res;
+        }
+
+        function refresh_objects() {
+            object_list_box.options.length = 0;
+            const items = co.list_of_objects();
+            items.sort();
+            items.forEach((item, i) => object_list_box.add(new Option(item)));
+        }
+
+        function display_object_details() {
+            const val = object_list_box.value;
+            const res = co.execute("?" + val);
+            object_detail_pane.innerHTML = res;
+        }
+
+        refresh_units();
+        unit_list_box.onchange = display_unit_details;
+
+        refresh_objects();
+        object_list_box.onchange = display_object_details;
 
         function newLine() {
             const container = document.createElement('div');

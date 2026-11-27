@@ -1,6 +1,6 @@
 //! Language identifiers and localized strings
 
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap, fmt::Display, ops::Deref};
 
 /// An identifier of a language used for localized string selection
 #[derive(Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
@@ -140,6 +140,23 @@ pub struct Unlocalized<'s> {
 
     /// The string
     pub str: &'s str,
+}
+
+
+impl Unlocalized<'_> {
+    /// Typical way to display a name in console
+    pub fn render(&self) -> impl Display {
+        struct Format<'s>(&'s Unlocalized<'s>);
+        impl Display for Format<'_> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match &self.0.unnative {
+                    Some(unn) => write!(f, "{}:{}", unn, self.0.str),
+                    None => write!(f, "{}", self.0.str),
+                }
+            }
+        }
+        Format(self)
+    }
 }
 
 

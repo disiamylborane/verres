@@ -11,7 +11,7 @@ and theories.
 - [Stubbed] numbers that can handle arbitrary precision rationals and inexact floats
 - [x] i18n framework for language entity names
 - [x] engine for units of measurement conversion and well-defined numeric arithmetics
-- [ ] directed acyclic concept graph for theory-agnostic real world objects
+- [x] directed acyclic concept graph for theory-agnostic real world objects
 - [ ] data-only algebraic type system having numbers and objects as primitives for experiment results
 - [ ] arithmetics for the type system values
 - [ ] well-defined parseable, tabular rendering and plot representations for type system value arrays

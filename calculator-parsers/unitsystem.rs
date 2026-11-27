@@ -4,7 +4,6 @@ use tables::{strings::Localized, units::{AbsoluteUnitDefinition, BaseUnitDefinit
 use super::*;
 
 
-
 pub fn unitsystem() -> UnitSystem {
     let en = Language::new("en").unwrap();
 

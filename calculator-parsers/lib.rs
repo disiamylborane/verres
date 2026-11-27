@@ -3,10 +3,11 @@
 use wasm_bindgen::prelude::*;
 
 mod unitsystem;
+mod objectgraph;
 
 use std::{collections::HashMap, ops::Deref, str::FromStr};
 use numbers::{Number, Rational};
-use tables::{strings::{Language, LanguageResolution, Name, Symbol}, units::{AbsoluteUnitDefinition, ArithmeticError, LogPointUnitDefinition, LogRatioUnitDefinition, ParsedUnitAtom, RelativeUnitDefinition, Unit, UnitParsingError, UnitSystem, Value, ValueError}};
+use tables::{objects::{ObjectGraph, ObjectId}, strings::{Language, LanguageResolution, Name, Symbol}, units::{AbsoluteUnitDefinition, ArithmeticError, LogPointUnitDefinition, LogRatioUnitDefinition, ParsedUnitAtom, RelativeUnitDefinition, Unit, UnitParsingError, UnitSystem, Value, ValueError}};
 
 
 #[derive(Debug)]
@@ -16,6 +17,8 @@ pub enum CalculatorError {
     ValueError(ValueError),
     ArithmeticError(ArithmeticError),
     NoSuchVariable(Symbol),
+    NoSuchObject(Name),
+    NoObjectExpressionResult
 }
 
 
@@ -24,6 +27,9 @@ pub enum Statement {
     Assign(Symbol, Value),
     Info(ParsedUnitAtom),
     InfoAll,
+    InfoObject(ObjectId),
+    ObjectList(Vec<ObjectId>),
+    InfoObjects,
 }
 
 
@@ -53,6 +59,7 @@ peg::parser!{
 
         pub rule symbol() -> Symbol
             = s:$(['A'..='Z' | 'a'..='z' | 'Α'..='Ω' | 'α'..='ω' | '%']+) {Symbol::new(s).unwrap()}
+
 
         pub rule name() -> Name
             = s:$(['A'..='Z' | 'a'..='z' | 'Α'..='Ω' | 'α'..='ω']['A'..='Z' | 'a'..='z' | 'Α'..='Ω' | 'α'..='ω' | '0'..='9' | ' ' | '-']*) {
@@ -138,10 +145,30 @@ peg::parser!{
             "(" _ x:value_expr() _ ")" {x}
         }
 
-        pub rule statement() -> Result<Statement, CalculatorError> 
+        pub rule object() -> Result<ObjectId, CalculatorError>
+            = "@" _ name:name() {
+                let obj = c.objects.find_name(&name, &LR).ok_or(CalculatorError::NoSuchObject(name))?;
+                Ok(obj)
+            }
+
+        pub rule statement() -> Result<Statement, CalculatorError>
             = "_" var:symbol() _ "=" _ e:value_expr() {Ok(Statement::Assign(var, e?))}
+            / "?" _ o:object() {
+                Ok(Statement::InfoObject(o?))
+            }
+            / "?" _ "@" {
+                Ok(Statement::InfoObjects)
+            }
             / "?" _ s:unit_atom() {Ok(Statement::Info(s?))}
             / "?" {Ok(Statement::InfoAll)}
+            / o1:object() _ "/\\" _ o2:object() {
+                let o = c.objects.find_lcas(&[o1?, o2?]);
+                Ok(Statement::ObjectList(o))
+            }
+            / o1:object() _ "\\/" _ o2:object() {
+                let o = c.objects.find_hcd(&[o1?, o2?]);
+                Ok(Statement::ObjectList(o))
+            }
             / e:value_expr() {Ok(Statement::Expression(e?))}
     }
 }
@@ -149,6 +176,7 @@ peg::parser!{
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
 pub struct CalculatorObject {
     units: UnitSystem,
+    objects: ObjectGraph,
     memory: HashMap<Symbol, Value>,
     ans: Value,
     lr: LanguageResolution,
@@ -161,6 +189,7 @@ impl CalculatorObject {
     pub fn new() -> Self {
         Self {
             units: unitsystem::unitsystem(),
+            objects: objectgraph::objectgraph(),
             memory: Default::default(),
             lr: LanguageResolution { primary: Language::new("en").unwrap(), secondary: None },
             ans: Value { num: Rational::ZERO.into_number(), unit: Unit::one() },
@@ -202,10 +231,10 @@ impl CalculatorObject {
 
                 let desc = &self.units[root];
                 let mut ret = String::with_capacity(256);
-                writeln!(&mut ret, "{}", desc.names.name.get(&self.lr).str).unwrap();
-                writeln!(&mut ret, "{}", desc.names.description.get(&self.lr).str).unwrap();
+                writeln!(&mut ret, "{}", desc.names.name.get(&self.lr).render()).unwrap();
+                writeln!(&mut ret, "{}", desc.names.description.get(&self.lr).render()).unwrap();
                 match &desc.kind {
-                    tables::units::UnitKind::Absolute(AbsoluteUnitDefinition{scale, allows_prefixes:_}) => 
+                    tables::units::UnitKind::Absolute(AbsoluteUnitDefinition{scale, allows_prefixes:_}) =>
                         write!(&mut ret, "1 {} = {}", desc.names.symbol, Value::from_quantity_canonical(scale.clone(), &self.units).repr(&self.units)),
                     tables::units::UnitKind::Relative(RelativeUnitDefinition{scale, offset}) => {
                         let unit = Value::from_quantity_canonical(scale.clone(), &self.units);
@@ -223,7 +252,33 @@ impl CalculatorObject {
             Statement::InfoAll => {
                 self.units.iter().map(|u| u.1.names.symbol.deref()).collect::<Vec<_>>().join(" ")
             }
+            Statement::InfoObjects => {
+                self.objects.iter().map(|u| u.1.name.get(&LR).render().to_string()).collect::<Vec<_>>().join("\n")
+            }
+            Statement::ObjectList(list) => {
+                list.iter().map(|&id| self.objects[id].name.get(&LR).render().to_string()).collect::<Vec<_>>().join("\n")
+            }
+            Statement::InfoObject(id) => {
+                let obj = &self.objects[id];
+                format!("{}\n{}\nParents: {}\nChildren: {}",
+                    obj.name.get(&LR).render(),
+                    obj.description.get(&LR).render(),
+                    obj.direct_parents.iter().map(|&o| self.objects[o].name.get(&LR).render().to_string()).collect::<Vec<_>>().join(", "),
+                    obj.direct_children.iter().map(|&o| self.objects[o].name.get(&LR).render().to_string()).collect::<Vec<_>>().join(", "),
+                )
+            }
         }
+    }
+
+    #[cfg_attr(target_family = "wasm", wasm_bindgen)]
+    pub fn list_of_units(&self) -> Vec<String> {
+        self.units.iter().map(|u| format!("{}{}", if u.1.is_degreed() {"°"} else {""}, u.1.names.symbol)).collect()
+    }
+
+    #[cfg_attr(target_family = "wasm", wasm_bindgen)]
+    pub fn list_of_objects(&self) -> Vec<String> {
+        self.objects.iter().map(|u| format!("@{}", u.1.name.get(&LR).render())).collect()
     }
 }
 
+const LR: LanguageResolution = LanguageResolution{primary: Language::new("en").unwrap(), secondary: None};

@@ -9,4 +9,4 @@ path = "numbers.rs"
 [dependencies]
 dashu = "0.6.2"
 serde = "1.0.229"
-serde_with = "3.24.0"
+serde_with = "3.25.0"
